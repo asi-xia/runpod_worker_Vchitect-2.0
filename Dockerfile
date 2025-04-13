@@ -34,27 +34,24 @@ RUN apt-get update && apt-get install -y \
 # Clean up to reduce image size
 # RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# Install comfy-cli runpod
-RUN pip install runpod requests \
-    && pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121 \
+# Install runpod and clone VchitectXL
+RUN pip install huggingface_hub runpod requests shortuuid \
+    && pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu124 \
     && git clone https://github.com/asi-xia/Vchitect-2.0.git
 
 # Change working directory to Vchitect-2.0
 WORKDIR /Vchitect-2.0
-
-# Support for the network volume
-ADD src/extra_model_paths.yaml ./
+ADD src/rp_handler.py ./
+RUN huggingface-cli download --resume-download Vchitect/Vchitect-2.0-2B --local-dir pretrained_weights \
+    && pip install -r requirements.txt
 
 # Go back to the root
 WORKDIR /
 
 # Add scripts
-ADD src/start.sh src/restore_snapshot.sh src/rp_handler.py test_input.json src/install_comfy_nodes.sh ./
-RUN chmod +x /start.sh /restore_snapshot.sh /install_comfy_nodes.sh \
-    && sed -i 's/\r$//' /start.sh \
-    && sed -i 's/\r$//' /install_comfy_nodes.sh \
-    && /install_comfy_nodes.sh
-ADD src/cm_config.ini /comfyui/user/default/ComfyUI-Manager/config.ini
-#RUN mv /comfyui/user/default/ComfyUI-Manager/cm_config.ini /comfyui/user/default/ComfyUI-Manager/config.ini
+ADD src/start.sh ./
+RUN chmod +x /start.sh \
+    && sed -i 's/\r$//' /start.sh
+
 # Start container
 CMD ["/start.sh"]

@@ -10,14 +10,6 @@ import requests
 import base64
 from io import BytesIO
 
-# Time to wait between API check attempts in milliseconds
-COMFY_API_AVAILABLE_INTERVAL_MS = 250
-# Maximum number of API check attempts
-COMFY_API_AVAILABLE_MAX_RETRIES = 6000
-# Time to wait between poll attempts in milliseconds
-COMFY_POLLING_INTERVAL_MS = int(os.environ.get("COMFY_POLLING_INTERVAL_MS", 500))
-# Maximum number of poll attempts
-COMFY_POLLING_MAX_RETRIES = int(os.environ.get("COMFY_POLLING_MAX_RETRIES", 6000))
 # Enforce a clean state after each job is done
 # see https://docs.runpod.io/docs/handler-additional-controls#refresh-worker
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
@@ -44,14 +36,10 @@ def validate_input(job_input):
             job_input = json.loads(job_input)
         except json.JSONDecodeError:
             return None, "Invalid JSON format in input"
-
-    # Validate 'workflow' in input
-    workflow = job_input.get("workflow")
-    if workflow is None:
-        return None, "Missing 'workflow' parameter"
-
+    
     # Return validated data and no error
-    return {"workflow": workflow}, None
+    return job_input, None
+
 
 def base64_encode(img_path):
     """
@@ -67,17 +55,13 @@ def base64_encode(img_path):
         encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
         return f"{encoded_string}"
 
+
 def process_output_images(file_name):
     """
     This function takes the "outputs" from image generation and the job ID,
     then determines the correct way to return the image, either as a direct URL
     to an AWS S3 bucket or as a base64 encoded string, depending on the
     environment configuration.
-
-    Args:
-        outputs (dict): A dictionary containing the outputs from image generation,
-                        typically includes node IDs and their respective output data.
-        job_id (str): The unique identifier for the job.
 
     Returns:
         dict: A dictionary with the state ('finished' or 'failed') and the message,
@@ -86,7 +70,7 @@ def process_output_images(file_name):
 
     The function works as follows:
     - It first determines the output path for the images from an environment variable,
-      defaulting to "/comfyui/output" if not set.
+      defaulting to "/Vchitect-2.0/output" if not set.
     - It then iterates through the outputs to find the filenames of the generated images.
     - After confirming the existence of the image in the output folder, it checks if the
       AWS S3 bucket is configured via the BUCKET_ENDPOINT_URL environment variable.
@@ -105,7 +89,6 @@ def process_output_images(file_name):
 
     # expected image output folder
     local_image_path = f"{VchitectXL_OUTPUT_PATH}/{output_images}"
-
     print(f"runpod-worker-VchitectXL - {local_image_path}")
 
     # The image is in the output folder
@@ -135,7 +118,6 @@ def process_output_images(file_name):
             "message": f"the file does not exist in the specified output folder: {local_image_path}",
         }
 
-
 def handler(job):
     """
     The main function that handles a job of generating an image.
@@ -155,24 +137,19 @@ def handler(job):
     validated_data, error_message = validate_input(job_input)
     if error_message:
         return {"state": "failed", 'message': 'task execution failed', "error": error_message}
-
-    # Extract validated data
-    workflow = validated_data["workflow"]
-    print(f"runpod-worker-VchitectXL - wait until video generation is complete")
-    # run the inference
-    try:
-        print(f"runpod-worker-VchitectXL - queued workflow")
-    except Exception as e:
-        return {"state": "failed", 'message': 'task execution failed', "error": f"Error queuing workflow: {str(e)}"}
     
-    # Get the generated image and return it as URL in an AWS bucket or as base64
+    # run the inference
+    print(f"runpod-worker-VchitectXL - wait until video generation is complete")
+    try:
+        os.system(f'python3 -u inference.py --propmt_text {validated_data["propmt"]} --cfg {validated_data["cfg"]} --steps {validated_data["steps"]} --duration {validated_data["duration"]} --resolution {validated_data["resolution"]}')
+    except Exception as e:
+        return {"state": "failed", 'message': 'task execution failed', "error": f"{str(e)}"}
+    
+    # Get the generated video and return it as URL in an AWS bucket or as base64
     file_name = 'zhihui_001.mp4'
     images_result = process_output_images(file_name)
-
     result = {**images_result, "refresh_worker": REFRESH_WORKER}
-
     return result
-
 
 # Start the handler only if this script is run directly
 if __name__ == "__main__":
