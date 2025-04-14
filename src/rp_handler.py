@@ -13,7 +13,7 @@ from io import BytesIO
 # Enforce a clean state after each job is done
 # see https://docs.runpod.io/docs/handler-additional-controls#refresh-worker
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
-
+MODEL_PATH = os.environ.get("MODEL_PATH", './pretrained_weights')
 
 def validate_input(job_input):
     """
@@ -80,7 +80,7 @@ def process_output_images(file_name):
       with a message indicating the missing image file.
     """
 
-    # The path where ComfyUI stores the generated images
+    # The path where VchitectXL stores the generated video
     VchitectXL_OUTPUT_PATH = os.environ.get("VchitectXL_OUTPUT_PATH", "/Vchitect-2.0/output")
     job_id = shortuuid.uuid()
     output_images = file_name
@@ -141,7 +141,7 @@ def handler(job):
     # run the inference
     print(f"runpod-worker-VchitectXL - wait until video generation is complete")
     try:
-        os.system(f'python3 -u inference.py --propmt_text {validated_data["propmt"]} --cfg {validated_data["cfg"]} --steps {validated_data["steps"]} --duration {validated_data["duration"]} --resolution {validated_data["resolution"]}')
+        os.system(f'python3 -u inference.py --ckpt_path {MODEL_PATH} --propmt_text {validated_data["propmt"]} --cfg {validated_data["cfg"]} --steps {validated_data["steps"]} --duration {validated_data["duration"]} --resolution {validated_data["resolution"]}')
     except Exception as e:
         return {"state": "failed", 'message': 'task execution failed', "error": f"{str(e)}"}
     

@@ -49,7 +49,7 @@ RUN --mount=type=secret,id=hf_token,mode=0444,required=true \
     && pip install -r requirements.txt
 
 RUN if [ "$BUILD_TYPE" = "full" ]; then \
-        huggingface-cli download --resume-download Vchitect/Vchitect-2.0-2B --local-dir pretrained_weights \
+        huggingface-cli download --resume-download Vchitect/Vchitect-2.0-2B --local-dir pretrained_weights; \
     fi
 
 # Go back to the root
