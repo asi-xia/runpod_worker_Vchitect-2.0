@@ -6,4 +6,4 @@ buid docker image的时候需要设置一下：
 粘贴tokens后保存文件。
 
 之后运行
-docker buildx build --progress=plain -t 你的用户名/镜像名:镜像tag --no-cache --secret --secret id=hf_token --platform linux/amd64 .
+docker buildx build --progress=plain -t 你的用户名/镜像名:镜像tag --no-cache --secret id=hf_token --platform linux/amd64 .
