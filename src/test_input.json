@@ -1,0 +1,9 @@
+{
+    "input": {
+        "propmt":"a cute cat.",
+        "cfg":7.5,
+        "steps":50,
+        "duration":5,
+        "resolution":"768x432"
+    }
+}

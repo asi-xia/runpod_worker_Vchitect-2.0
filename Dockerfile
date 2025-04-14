@@ -41,7 +41,7 @@ RUN pip install huggingface_hub runpod requests shortuuid \
 
 # Change working directory to Vchitect-2.0
 WORKDIR /Vchitect-2.0
-ADD src/rp_handler.py ./
+ADD src/rp_handler.py src/test_input.json ./
 ARG BUILD_TYPE=code
 
 RUN --mount=type=secret,id=hf_token,mode=0444,required=true \
