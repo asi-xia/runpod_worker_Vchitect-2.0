@@ -42,10 +42,15 @@ RUN pip install huggingface_hub runpod requests shortuuid \
 # Change working directory to Vchitect-2.0
 WORKDIR /Vchitect-2.0
 ADD src/rp_handler.py ./
+ARG BUILD_TYPE=code
+
 RUN --mount=type=secret,id=hf_token,mode=0444,required=true \
-    huggingface-cli login --token $(cat /run/secrets/hf_token)
-RUN huggingface-cli download --resume-download Vchitect/Vchitect-2.0-2B --local-dir pretrained_weights \
+    huggingface-cli login --token $(cat /run/secrets/hf_token) \
     && pip install -r requirements.txt
+
+RUN if [ "$BUILD_TYPE" = "full" ]; then \
+        huggingface-cli download --resume-download Vchitect/Vchitect-2.0-2B --local-dir pretrained_weights \
+    fi
 
 # Go back to the root
 WORKDIR /
