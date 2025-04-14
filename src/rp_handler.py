@@ -142,7 +142,7 @@ def handler(job):
     print(f"got task:{validated_data}")
     print(f"runpod-worker-VchitectXL - wait until video generation is complete")
     try:
-        os.system(f'python3 -u inference.py --ckpt_path {MODEL_PATH} --propmt_text {validated_data["propmt"]} --cfg {validated_data["cfg"]} --steps {validated_data["steps"]} --duration {validated_data["duration"]} --resolution {validated_data["resolution"]}')
+        os.system(f'''python3 -u inference.py --ckpt_path {MODEL_PATH} --propmt_text "{validated_data["propmt"]}" --cfg {validated_data["cfg"]} --steps {validated_data["steps"]} --duration {validated_data["duration"]} --resolution {validated_data["resolution"]}''')
     except Exception as e:
         return {"state": "failed", 'message': 'task execution failed', "error": f"{str(e)}"}
     
