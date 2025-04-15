@@ -145,13 +145,13 @@ def handler(job):
     print(f"runpod-worker-VchitectXL - wait until video generation is complete")
     
     try:
-        subprocess.run(['python3','-u','inference.py', '--ckpt_path',MODEL_PATH,'--propmt_text',validated_data["propmt"],'--cfg',validated_data["cfg"],'--steps',validated_data["steps"],'--seed',validated_data["seed"],'--duration',validated_data["duration"],'--resolution',validated_data["resolution"]], capture_output=True, text=True)
+        subprocess.run(['python3','-u','inference.py', '--ckpt_path',MODEL_PATH,'--propmt_text',validated_data["propmt"],'--cfg',validated_data["cfg"],'--steps',validated_data["steps"],'--seed',validated_data["seed"],'--duration',validated_data["duration"],'--resolution',validated_data["resolution"]], capture_output=True, text=True, check=True, cwd=r'/Vchitect-2.0')
         if validated_data["hi_res"]:
-            subprocess.run(['python3','-u','enhance_a_video.py', '--model_path',f'{MODEL_PATH}/venhancer_v2.pt','--input_path',f'{VchitectXL_OUTPUT_PATH}/zhihui_001.mp4','--save_dir',f'{VchitectXL_OUTPUT_PATH}/zhihui_001e.mp4','--prompt',validated_data["propmt"],'--cfg',validated_data["cfg"]], capture_output=True, text=True, cwd='/VEnhancer')
+            subprocess.run(['python3','-u','enhance_a_video.py', '--model_path',f'{MODEL_PATH}/venhancer_v2.pt','--input_path',f'{VchitectXL_OUTPUT_PATH}/zhihui_001.mp4','--save_dir',f'{VchitectXL_OUTPUT_PATH}/zhihui_001e.mp4','--prompt',validated_data["propmt"],'--cfg',validated_data["cfg"]], capture_output=True, text=True, check=True, cwd=r'/VEnhancer')
             file_name = 'zhihui_001e.mp4'
         else:
             file_name = 'zhihui_001.mp4'
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         return {"state": "failed", 'message': 'task execution failed', "error": f"{str(e)}"}
     
     # Get the generated video and return it as URL in an AWS bucket or as base64
