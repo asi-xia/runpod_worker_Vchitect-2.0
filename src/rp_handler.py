@@ -9,11 +9,13 @@ import os
 import requests
 import base64
 from io import BytesIO
+import subprocess
 
 # Enforce a clean state after each job is done
 # see https://docs.runpod.io/docs/handler-additional-controls#refresh-worker
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
 MODEL_PATH = os.environ.get("MODEL_PATH", './pretrained_weights')
+VchitectXL_OUTPUT_PATH = os.environ.get("VchitectXL_OUTPUT_PATH", "/Vchitect-2.0/output")
 
 def validate_input(job_input):
     """
@@ -81,7 +83,7 @@ def process_output_images(file_name):
     """
 
     # The path where VchitectXL stores the generated video
-    VchitectXL_OUTPUT_PATH = os.environ.get("VchitectXL_OUTPUT_PATH", "/Vchitect-2.0/output")
+    
     job_id = shortuuid.uuid()
     output_images = file_name
 
@@ -141,13 +143,18 @@ def handler(job):
     # run the inference
     print(f"got task:{validated_data}")
     print(f"runpod-worker-VchitectXL - wait until video generation is complete")
+    
     try:
-        os.system(f'''python3 -u inference.py --ckpt_path {MODEL_PATH} --propmt_text "{validated_data["propmt"]}" --cfg {validated_data["cfg"]} --steps {validated_data["steps"]} --duration {validated_data["duration"]} --resolution {validated_data["resolution"]}''')
+        subprocess.run(['python3','-u','inference.py', '--ckpt_path',MODEL_PATH,'--propmt_text',validated_data["propmt"],'--cfg',validated_data["cfg"],'--steps',validated_data["steps"],'--seed',validated_data["seed"],'--duration',validated_data["duration"],'--resolution',validated_data["resolution"]], capture_output=True, text=True)
+        if validated_data["hi_res"]:
+            subprocess.run(['python3','-u','enhance_a_video.py', '--model_path',f'{MODEL_PATH}/venhancer_v2.pt','--input_path',f'{VchitectXL_OUTPUT_PATH}/zhihui_001.mp4','--save_dir',f'{VchitectXL_OUTPUT_PATH}/zhihui_001e.mp4','--prompt',validated_data["propmt"],'--cfg',validated_data["cfg"]], capture_output=True, text=True, cwd='/VEnhancer')
+            file_name = 'zhihui_001e.mp4'
+        else:
+            file_name = 'zhihui_001.mp4'
     except Exception as e:
         return {"state": "failed", 'message': 'task execution failed', "error": f"{str(e)}"}
     
     # Get the generated video and return it as URL in an AWS bucket or as base64
-    file_name = 'zhihui_001.mp4'
     images_result = process_output_images(file_name)
     result = {**images_result, "refresh_worker": REFRESH_WORKER}
     return result

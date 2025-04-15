@@ -37,7 +37,8 @@ RUN apt-get update && apt-get install -y \
 # Install runpod and clone VchitectXL
 RUN pip install huggingface_hub runpod requests shortuuid \
     && pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu124 \
-    && git clone https://github.com/asi-xia/Vchitect-2.0.git
+    && git clone https://github.com/asi-xia/Vchitect-2.0.git \
+    && git clone https://github.com/asi-xia/VEnhancer.git
 
 # Change working directory to Vchitect-2.0
 WORKDIR /Vchitect-2.0
@@ -46,7 +47,7 @@ ARG BUILD_TYPE=code
 
 RUN --mount=type=secret,id=hf_token,mode=0444,required=true \
     huggingface-cli login --token $(cat /run/secrets/hf_token) \
-    && pip install -r requirements.txt
+    && pip install -r requirements_with_enhancer.txt
 
 RUN if [ "$BUILD_TYPE" = "full" ]; then \
         huggingface-cli download --resume-download Vchitect/Vchitect-2.0-2B --local-dir pretrained_weights; \
