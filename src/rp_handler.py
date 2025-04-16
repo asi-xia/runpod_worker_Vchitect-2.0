@@ -148,7 +148,7 @@ def handler(job):
         result = subprocess.run(['python3','-u','inference.py', '--ckpt_path',MODEL_PATH,'--propmt_text',validated_data["propmt"],'--cfg',str(validated_data["cfg"]),'--steps',str(validated_data["steps"]),'--seed',str(validated_data["seed"]),'--duration',str(validated_data["duration"]),'--resolution',validated_data["resolution"]], capture_output=True, text=True, check=True, cwd=r'/Vchitect-2.0')
         if validated_data["hi_res"]:
             print('video refinement process')
-            result = subprocess.run(['python3','-u','enhance_a_video.py', '--model_path',MODEL_PATH,'--input_path',f'{VchitectXL_OUTPUT_PATH}/zhihui_001.mp4','--save_dir',VchitectXL_OUTPUT_PATH,'--prompt',validated_data["propmt"],'--cfg',str(validated_data["cfg"]),'--up_scale',str(validated_data["up_scale"])], capture_output=True, text=True, check=True, cwd=r'/VEnhancer')
+            result = subprocess.run(['python3','-u','enhance_a_video.py', '--model_path',f'{MODEL_PATH}/VEnhancer','--input_path',f'{VchitectXL_OUTPUT_PATH}/zhihui_001.mp4','--save_dir',VchitectXL_OUTPUT_PATH,'--prompt',validated_data["propmt"],'--cfg',str(validated_data["cfg"]),'--up_scale',str(validated_data["up_scale"])], capture_output=True, text=True, check=True, cwd=r'/VEnhancer')
             file_name = 'zhihui_001_upscale.mp4'
         else:
             file_name = 'zhihui_001.mp4'
